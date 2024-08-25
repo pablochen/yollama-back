@@ -17,15 +17,15 @@ app = FastAPI()
 
 embed_model = BGEM3FlagModel('BAAI/bge-m3', use_fp16=True)
 
-connections.connect(
-    alias="default",
-    host="milvus",
-    port="19530"
-)
-
-collection_name = "test_insurance_003"
-collection = Collection(name=collection_name)
-collection.load()
+## connections.connect(
+##     alias="default",
+##     host="milvus",
+##     port="19530"
+## )
+## 
+## collection_name = "test_insurance_003"
+## collection = Collection(name=collection_name)
+## collection.load()
 
 alpaca_prompt = """
 ### Instruction:
@@ -140,7 +140,7 @@ def runner(model_path, token_len, thread_len, prompt):
 @app.get("/run_model")
 def run_model(input_text: str, token_len: int, thread_len:int, search_len:int):
     model_option = '/data/model.gguf'
-    context = ''
+    context = get_answer_from_vectordb(input_text, search_len)
     prompt = alpaca_prompt.format(instruction, context, input_text, "")
     return StreamingResponse(
         runner(model_option, str(token_len), str(thread_len), prompt), 
