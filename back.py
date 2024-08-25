@@ -17,15 +17,15 @@ app = FastAPI()
 
 embed_model = BGEM3FlagModel('BAAI/bge-m3', use_fp16=True)
 
-# connections.connect(
-#     alias="default",
-#     host="milvus",
-#     port="19530"
-# )
+connections.connect(
+    alias="default",
+    host="milvus",
+    port="19530"
+)
 
-# collection_name = "test_insurance_003"
-# collection = Collection(name=collection_name)
-# collection.load()
+collection_name = "test_insurance_003"
+collection = Collection(name=collection_name)
+collection.load()
 
 alpaca_prompt = """
 ### Instruction:
@@ -79,7 +79,7 @@ def runner(model_path, token_len, thread_len, prompt):
     start_time = time.time()
     
     command = [
-        '/root/model/runner',
+        '/data/runner',
         '--model', model_path,
         '--prompt', prompt,
         '--n-predict', token_len,
@@ -100,20 +100,17 @@ def runner(model_path, token_len, thread_len, prompt):
     response_started = False
 
     while True:
-        time.sleep(0.001)
+        time.sleep(0.01)
         try:
             output = os.read(master_fd, 1024)
             try:
                 output = output.decode('utf-8')
             except UnicodeDecodeError:
                 output = ""
-    
-            print(f'output: {output} / process.poll(): {process.poll()}')
-                
-            # if output == "" and process.poll() is not None:
-            if 'instruction' in output and process.poll() is not None:
+        
+            if output == "" and process.poll() is not None:
                 break
-                
+                            
             if output:
                 if not response_started:
                     if start_marker in output_text:
@@ -132,21 +129,17 @@ def runner(model_path, token_len, thread_len, prompt):
         except OSError as e:
             print(f"OSError: {e}")
             break
-        # except Exception as e:
-        #     print(f"Exception: {e}")
-        #     output = ""
-        #     pass
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    yield f"<br>Execution time: {elapsed_time:.2f} seconds"  # 실행 시간을 스트림에 포함
+    yield f"<br>Execution time: {elapsed_time:.2f} seconds"
 
     os.close(master_fd)
     process.wait()
 
 @app.get("/run_model")
 def run_model(input_text: str, token_len: int, thread_len:int, search_len:int):
-    model_option = '/root/model/model.gguf'
+    model_option = '/data/model.gguf'
     context = ''
     prompt = alpaca_prompt.format(instruction, context, input_text, "")
     return StreamingResponse(
@@ -157,10 +150,9 @@ def run_model(input_text: str, token_len: int, thread_len:int, search_len:int):
 def main():
     input_text = "심장 관련된 내용 알려줘"
     search_len = 5
-    context = ""
-    # context = get_answer_from_vectordb(input_text, search_len)
+    context = get_answer_from_vectordb(input_text, search_len)
     
-    model_option = '/root/model.gguf'
+    model_option = '/root/model/model.gguf'
     token_len = 256
     thread_len = 8
     prompt = alpaca_prompt.format(instruction, context, input_text, "")
