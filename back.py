@@ -17,15 +17,15 @@ app = FastAPI()
 
 embed_model = BGEM3FlagModel('BAAI/bge-m3', use_fp16=True)
 
-## connections.connect(
-##     alias="default",
-##     host="milvus",
-##     port="19530"
-## )
-## 
-## collection_name = "test_insurance_003"
-## collection = Collection(name=collection_name)
-## collection.load()
+connections.connect(
+    alias="default",
+    host="milvus",
+    port="19530"
+)
+
+collection_name = "test_insurance_003"
+collection = Collection(name=collection_name)
+collection.load()
 
 alpaca_prompt = """
 ### Instruction:
